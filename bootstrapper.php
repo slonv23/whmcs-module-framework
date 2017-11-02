@@ -92,18 +92,22 @@ return function($marker = null) {
         return;
     }
 
-    // Determine root directory
-    $rootDir = $dirLookup($vendorsDir, [
-        // modules/addon/plugin-name/vendor
-        "/../../../init.php"
-    ], function($dir) {
-        $dir = rtrim($dir, '/');
+    if ($whmcsInitialized) {
+        $rootDir = ROOTDIR;
+    } else {
+        // Determine root directory
+        $rootDir = $dirLookup($vendorsDir, [
+            // modules/addon/plugin-name/vendor
+            "/../../../init.php"
+        ], function ($dir) {
+            $dir = rtrim($dir, '/');
 
-        return is_file("$dir/init.php") and is_file("$dir/vendor/whmcs.composer.lock");
-    });
+            return is_file("$dir/init.php") and is_file("$dir/vendor/whmcs.composer.lock");
+        });
 
-    if (!$rootDir) {
-        throw new ErrorException('Cannot determine WHMCS root directory');
+        if (!$rootDir) {
+            throw new ErrorException('Cannot determine WHMCS root directory');
+        }
     }
 
     // Load WHMCS autoloader before (static files issue)
