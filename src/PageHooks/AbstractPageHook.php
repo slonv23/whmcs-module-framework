@@ -148,6 +148,7 @@ abstract class AbstractPageHook
 
             // Fix templates
             switch ($page) {
+                case 'oauth/layout':
                 case 'viewinvoice':
                     if (!empty($vars['template'])) {
                         $theme = $vars['template'];
