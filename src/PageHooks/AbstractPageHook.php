@@ -178,7 +178,7 @@ abstract class AbstractPageHook
             }
 
             $codeGenerator = $codeGenerator->bindTo($self);
-            
+
             $return = call_user_func($codeGenerator, $vars);
 
             if ($self->jsCustomizers[0]->hasAdjustments() and self::POSITION_BODY_BOTTOM != $self->position) {
@@ -200,7 +200,9 @@ abstract class AbstractPageHook
 
             // Fix templates if needed
             if ($return) {
+                $path = Helper::getRootDir() . "/templates/{$vars['template']}/{$page}.tpl";
                 foreach ($self->backendCustomizers as $customizer) {
+                    $customizer->setPath($path);
                     $customizer->apply();
                 }
             }
