@@ -132,14 +132,21 @@ abstract class AbstractPageHook
             // Client area
             if (!empty($vars['templatefile'])) {
                 $page = $vars['templatefile'];
+                $path = Helper::getRootDir() . "/templates/{$vars['template']}/{$page}.tpl";
             }
             // Admin area
             elseif (!empty($vars['filename'])) {
                 $page = $vars['filename'];
+                $path = Helper::getRootDir() . "/admin/templates/{$vars['template']}/{$page}.tpl";
+                if(!file_exists($path)) {
+                    $path = Helper::getRootDir() . "/admin/{$page}.tpl";
+                }
             }
             else {
                 throw new ErrorException("Bad hook \"{$hook}\" result, no \"templatefile\" or \"filename\" variable is passed");
             }
+
+            $path = file_exists($path) ? $path : false;
 
             // To another page
             if ('*' != $templateName and strtolower($templateName) != strtolower($page)) {
@@ -149,28 +156,23 @@ abstract class AbstractPageHook
             // Fix templates
             switch ($page) {
                 case 'viewinvoice':
-                    if (!empty($vars['template'])) {
-                        $theme = $vars['template'];
-                        $path = Helper::getRootDir() . "/templates/$theme/$page.tpl";
+                    if (!empty($vars['template']) && (is_file($path))) {
+                        $customizer = new BackendPageCustomizer();
+                        $customizer->setPath($path);
+                        $self->backendCustomizers[] = $customizer;
 
-                        if (is_file($path)) {
-                            $customizer = new BackendPageCustomizer();
-                            $customizer->setPath($path);
-                            $self->backendCustomizers[] = $customizer;
-
-                            $customizer->add(SimpleRegexpReplacePageAdjustment::build()
-                                ->setTarget(preg_quote('</head>'))
-                                ->setInjection('{$headoutput}')
-                                ->setPosition(SimpleRegexpReplacePageAdjustment::POSITION_BEFORE));
-                            $customizer->add(SimpleRegexpReplacePageAdjustment::build()
-                                ->setTarget(preg_quote('<body>'))
-                                ->setInjection('{$headeroutput}')
-                                ->setPosition(SimpleRegexpReplacePageAdjustment::POSITION_AFTER));
-                            $customizer->add(SimpleRegexpReplacePageAdjustment::build()
-                                ->setTarget(preg_quote('</body>'))
-                                ->setInjection('{$footeroutput}')
-                                ->setPosition(SimpleRegexpReplacePageAdjustment::POSITION_BEFORE));
-                        }
+                        $customizer->add(SimpleRegexpReplacePageAdjustment::build()
+                            ->setTarget(preg_quote('</head>'))
+                            ->setInjection('{$headoutput}')
+                            ->setPosition(SimpleRegexpReplacePageAdjustment::POSITION_BEFORE));
+                        $customizer->add(SimpleRegexpReplacePageAdjustment::build()
+                            ->setTarget(preg_quote('<body>'))
+                            ->setInjection('{$headeroutput}')
+                            ->setPosition(SimpleRegexpReplacePageAdjustment::POSITION_AFTER));
+                        $customizer->add(SimpleRegexpReplacePageAdjustment::build()
+                            ->setTarget(preg_quote('</body>'))
+                            ->setInjection('{$footeroutput}')
+                            ->setPosition(SimpleRegexpReplacePageAdjustment::POSITION_BEFORE));
                     }
 
                     break;
@@ -198,6 +200,8 @@ abstract class AbstractPageHook
             // Fix templates if needed
             if ($return) {
                 foreach ($self->backendCustomizers as $customizer) {
+                    if($path && $customizer->hasAdjustments())
+                        $customizer->setPath($path);
                     $customizer->apply();
                 }
             }

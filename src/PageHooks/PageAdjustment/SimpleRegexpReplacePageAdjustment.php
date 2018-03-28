@@ -10,7 +10,8 @@ class SimpleRegexpReplacePageAdjustment extends AbstractPageAdjustment
     protected $content;
     protected $injection;
     protected $target;
-    protected $position;
+    protected $position = self::POSITION_BEFORE;
+    protected $replace = false;
 
     /**
      * Set content
@@ -94,6 +95,11 @@ class SimpleRegexpReplacePageAdjustment extends AbstractPageAdjustment
         return $this->position;
     }
 
+    public function setReplace($replace) {
+        $this->replace = $replace;
+        return $this;
+    }
+
     public function isAlreadyApplied()
     {
         $this->validateParameters();
@@ -105,9 +111,14 @@ class SimpleRegexpReplacePageAdjustment extends AbstractPageAdjustment
     {
         $this->validateParameters();
 
+        if($this->replace)
+            $b = '';
+        else
+            $b = "\n\$1";
+
         $content = preg_replace(
             "~({$this->target})~",
-            self::POSITION_BEFORE == $this->position ? "{$this->injection}\n$1" : "$1\n{$this->injection}",
+            self::POSITION_BEFORE == $this->position ? "{$this->injection}$b" : "$b{$this->injection}",
             $this->content,
             1,
             $replaced
